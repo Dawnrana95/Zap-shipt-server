@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
@@ -37,19 +37,31 @@ async function run() {
         const database = client.db('newDatabase').collection('data')
 
 
+
+        // app.get('/applications', async (req, res) => {
+        //     // সব ডাটা দেখার জন্য
+        //     const allParcels = await client.db('newDatabase').collection('data').find({}).toArray();
+        //     console.log('All parcels in DB:', allParcels); // এটা দেখুন
+        //     res.send(allParcels);
+        // });
+
+
         app.get('/applications', async (req, res) => {
             const userEmail = req.query.email;
 
             const query = userEmail ? { email: userEmail } : {};
 
-            const options = {
-                sort: { createdAt: -1 }, // Newest first
-            };
-
-            const parcels = await database.find(query, { _id: 1, name: 1, price: 1,}).toArray();
-
+            const parcels = await database.find(query).toArray();
             res.send(parcels);
         });
+
+        app.delete('/applications/:id',async(req, res) =>{
+            const id = req.params.id;
+            const query = {_id: new ObjectId(id)}
+
+            const result = database.deleteOne(query)
+            res.send(result)
+        })
 
 
 
