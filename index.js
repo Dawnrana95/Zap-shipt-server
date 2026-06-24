@@ -6,6 +6,10 @@ const port = process.env.PORT || 5000;
 
 const app = express();
 
+// strip
+const stripe = require("stripe")(process.env.STRUO_SECRET_KEE);
+
+
 // middleware
 app.use(cors());
 app.use(express.json());
@@ -55,13 +59,24 @@ async function run() {
             res.send(parcels);
         });
 
-        app.delete('/applications/:id',async(req, res) =>{
+        app.delete('/applications/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id: new ObjectId(id)}
+            const query = { _id: new ObjectId(id) }
 
             const result = database.deleteOne(query)
             res.send(result)
         })
+        app.get('/applications/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+                const query = { _id: new ObjectId(id) };
+                const result = await database.findOne(query);
+                res.send(result);
+            } catch (err) {
+                console.log(err);
+                res.status(500).send(err.message);
+            }
+        });
 
 
 
@@ -74,6 +89,29 @@ async function run() {
             const result = await database.find().toArray()
             res.send(result)
         })
+
+
+
+
+        app.post('/create-payment-intent', async (req, res) => {
+            try {
+                const price = req.body.amount;
+                console.log(price)
+
+                const amount = price * 100; // টাকাকে cents এ convert
+
+                const paymentIntent = await stripe.paymentIntents.create({
+                    amount: amount,
+                    currency: 'usd',
+                    payment_method_types: ['card'],
+                });
+
+                res.json({ clientSecret: paymentIntent.client_secret });
+
+            } catch (error) {
+                res.status(500).json({ error: error.message });
+            }
+        });
 
 
 
