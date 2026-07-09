@@ -59,13 +59,69 @@ async function run() {
         const userCullactoon = client.db('newDatabase').collection('user')
         const RiderCullactoon = client.db('newDatabase').collection('rider')
 
+        const variFyAdmin = async (req, res, next) => {
+            const email = req.decoded_email
+            const quary = { email }
+            const user = await userCullactoon.findOne(quary)
+
+            if (!user || user.role !== 'admin') {
+                return res.status(403).send({ message: 'you are a Bot' })
+            }
+
+            next()
+        }
+
+        // ✅ Add New user in user cullaction
+        app.post('/user', async (req, res) => {
+            const email = req.body.email;
+            const userExist = await userCullactoon.findOne({ email })
+
+            if (userExist) { return res.status(200).send({ message: 'User already exists' }) }
+
+            const userInfo = req.body;
+            const result = await userCullactoon.insertOne(userInfo);
+            res.send(result)
+        })
+        // ✅ Sand New user in user cullaction
+        app.get('/user', async (req, res) => {
+            const result = await userCullactoon.find().toArray()
+            res.send(result)
+        })
+        // ✅ Find role    admin/user/rider
+        app.get('/user/:email/role', verifyFBToken, async (req, res) => {
+            const email = req.params.email;
+            const quary = { email }
+            const user = await userCullactoon.findOne(quary)
+            res.send({ role: user?.role || 'user' })
+        })
+        // ✅ Updat User status in user cullaction
+        app.patch('/user/:id/role', verifyFBToken,variFyAdmin,  async (req, res) => {
+            const userId = req.params.id
+            const upDatInfo = req.body
+            const quary = { _id: new ObjectId(userId) }
+
+            const carsor = {
+                $set: {
+                    role: upDatInfo.role
+                }
+            }
+            const result = await userCullactoon.updateOne(quary, carsor)
+            res.send(result)
+        })
+
         //✅ Rider insart
         app.post('/rider', async (req, res) => {
             const rider = req.body;
             rider.status = 'panding'
             rider.createdAt = new Date()
-
             const result = await RiderCullactoon.insertOne(rider)
+            res.send(result)
+        })
+        //✅ Rider Delet Apply
+        app.delete('/rider:id', verifyFBToken, async (req, res) => {
+            const id = req.params.id;
+            const quary = { _id: new ObjectId(id) }
+            const result = await RiderCullactoon.deleteOne(quary)
             res.send(result)
         })
         // ✅Rider find
@@ -75,7 +131,6 @@ async function run() {
             if (req.query.status) {
                 query.status = req.query.status
             }
-
             const result = await RiderCullactoon.find(query).toArray()
             res.send(result)
         })
@@ -104,42 +159,18 @@ async function run() {
             const carcor = await userCullactoon.updateOne(Userquary, updatUserRol)
             res.send(result)
         })
-        //✅ Rider Delet Apply
-        app.delete('/rider:id', verifyFBToken, async (req, res) => {
+
+        //✅ Add Parcel on detabase
+        app.post('/applications', async (req, res) => {
+            const data = req.body;
+            const result = await database.insertOne(data);
+            res.send(result);
+        });
+        //✅ Delet My Parcel
+        app.delete('/applications/:id', async (req, res) => {
             const id = req.params.id;
-            const quary = { _id: new ObjectId(id) }
-            const result = await RiderCullactoon.deleteOne(quary)
-            res.send(result)
-        })
-
-        // ✅ Add New user in user cullaction
-        app.post('/user', async (req, res) => {
-            const email = req.body.email;
-            const userExist = await userCullactoon.findOne({ email })
-
-            if (userExist) { return res.status(200).send({ message: 'User already exists' }) }
-
-            const userInfo = req.body;
-            const result = await userCullactoon.insertOne(userInfo);
-            res.send(result)
-        })
-        // ✅ Sand New user in user cullaction
-        app.get('/user', async (req, res) => {
-            const result = await userCullactoon.find().toArray()
-            res.send(result)
-        })
-        // ✅ Updat User status in user cullaction
-        app.patch('/user:id', async (req, res) => {
-            const userId = req.params.id
-            const upDatInfo = req.body
-            const quary = {_id: new ObjectId(userId)}
-
-            const carsor = {
-                $set: {
-                    role : upDatInfo.role
-                }
-            }
-            const result = await userCullactoon.updateOne(quary,carsor)
+            const query = { _id: new ObjectId(id) }
+            const result = await database.deleteOne(query)
             res.send(result)
         })
         // ✅ Send Parcel data in client side with email
@@ -155,15 +186,6 @@ async function run() {
             const parcels = await database.find(query).toArray();
             res.send(parcels);
         });
-
-        //✅ Delet My Parcel
-        app.delete('/applications/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: new ObjectId(id) }
-            const result = await database.deleteOne(query)
-            res.send(result)
-        })
-
         // ✅ Send 1 Parcel data in client side with (id)
         app.get('/applications/:id', async (req, res) => {
             try {
@@ -177,12 +199,7 @@ async function run() {
             }
         });
 
-        //✅ Add Parcel on detabase
-        app.post('/applications', async (req, res) => {
-            const data = req.body;
-            const result = await database.insertOne(data);
-            res.send(result);
-        });
+
 
         // ✅ verifyFBToken    //✅Payment history
         app.get('/paymentstatas', verifyFBToken, async (req, res) => {
