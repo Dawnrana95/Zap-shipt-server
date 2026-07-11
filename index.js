@@ -84,7 +84,17 @@ async function run() {
         })
         // ✅ Sand New user in user cullaction
         app.get('/user', async (req, res) => {
-            const result = await userCullactoon.find().toArray()
+            const searchText = req.query.searchText;
+            const quary = {}; 
+            if(searchText){
+                // quary.DisPlayName = {$regex: searchText , $options: 'i'};
+                quary.$or = [
+                    {DisPlayName: {$regex: searchText , $options: 'i'}},
+                    {email: {$regex: searchText , $options: 'i'}},
+                ]
+            }
+
+            const result = await userCullactoon.find(quary).toArray()
             res.send(result)
         })
         // ✅ Find role    admin/user/rider
@@ -135,7 +145,7 @@ async function run() {
             res.send(result)
         })
         // ✅Rider set status
-        app.patch('/rider:id', verifyFBToken, async (req, res) => {
+        app.patch('/rider:id', verifyFBToken,variFyAdmin, async (req, res) => {
             const status = req.body.status;
             const id = req.params.id;
             const quary = { _id: new ObjectId(id) }
