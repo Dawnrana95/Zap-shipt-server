@@ -85,12 +85,12 @@ async function run() {
         // ✅ Sand New user in user cullaction
         app.get('/user', async (req, res) => {
             const searchText = req.query.searchText;
-            const quary = {}; 
-            if(searchText){
+            const quary = {};
+            if (searchText) {
                 // quary.DisPlayName = {$regex: searchText , $options: 'i'};
                 quary.$or = [
-                    {DisPlayName: {$regex: searchText , $options: 'i'}},
-                    {email: {$regex: searchText , $options: 'i'}},
+                    { DisPlayName: { $regex: searchText, $options: 'i' } },
+                    { email: { $regex: searchText, $options: 'i' } },
                 ]
             }
 
@@ -105,7 +105,7 @@ async function run() {
             res.send({ role: user?.role || 'user' })
         })
         // ✅ Updat User status in user cullaction
-        app.patch('/user/:id/role', verifyFBToken,variFyAdmin,  async (req, res) => {
+        app.patch('/user/:id/role', verifyFBToken, variFyAdmin, async (req, res) => {
             const userId = req.params.id
             const upDatInfo = req.body
             const quary = { _id: new ObjectId(userId) }
@@ -136,16 +136,23 @@ async function run() {
         })
         // ✅Rider find
         app.get('/rider', async (req, res) => {
+            const {status,senderRegion} = req.query;
+
             const query = {}
 
-            if (req.query.status) {
-                query.status = req.query.status
+            if (status) {
+                query.status = status
             }
+            if(senderRegion){
+                query.senderRegion = senderRegion
+            }
+            
+
             const result = await RiderCullactoon.find(query).toArray()
             res.send(result)
         })
         // ✅Rider set status
-        app.patch('/rider:id', verifyFBToken,variFyAdmin, async (req, res) => {
+        app.patch('/rider:id', verifyFBToken, variFyAdmin, async (req, res) => {
             const status = req.body.status;
             const id = req.params.id;
             const quary = { _id: new ObjectId(id) }
@@ -183,16 +190,50 @@ async function run() {
             const result = await database.deleteOne(query)
             res.send(result)
         })
-        // ✅ Send Parcel data in client side with email
-        app.get('/applications', verifyFBToken, async (req, res) => {
-            const userEmail = req.query.email;
+        //✅ Updat parcel Data and rider data //
+        app.patch('/applications/:id',async(req, res)=>{
+            const {riderId, riderEmail, riderName, parcelId} = req.body
+            const id = req.params.id;
+
+            const quary = {_id: new ObjectId(id)}
+
+            const updateDocs = {
+                $set: {
+                    deliveryStatas: 'rider-assinded',
+                    riderId: riderId,
+                    riderEmail: riderEmail,
+                    riderName: riderName
+
+                }
+            }
+            const result = await database.updateOne(quary,updateDocs)
+
+            //updat rider
+            const riderquery = {_id: new ObjectId(riderId)}
+            const riderUpdat = {
+                $set: {
+                    workstatus: 'in-dalivare'
+                }
+            }
+            const riderresult = await RiderCullactoon.updateOne(riderquery,riderUpdat)
+            res.send(result)
+        })
 
 
-            if (userEmail !== req.decoded_email) {
-                return res.status(403).send({ message: 'fuck You' })
+
+        // ✅ Send Parcel data in client side 
+        app.get('/applications',  async (req, res) => {
+            const query =  {};
+            const {email, deliveryStatas} = req.query;
+
+            if(email){
+                query.email= email;
+            }
+            if(deliveryStatas){
+                query.deliveryStatas = deliveryStatas;
             }
 
-            const query = userEmail ? { email: userEmail } : {};
+
             const parcels = await database.find(query).toArray();
             res.send(parcels);
         });
@@ -232,7 +273,12 @@ async function run() {
             const { parcelid, email, amount, paymentMethod, transactionId } = req.body;
             const updatResult = await database.updateOne(
                 { _id: new ObjectId(parcelid) },
-                { $set: { payment_statas: 'paid' } }
+                {
+                    $set: {
+                        payment_statas: 'paid',
+                        deliveryStatas: 'panding-picup'
+                    }
+                }
             )
             const paymentDoc = {
                 parcelid, email, amount, paymentMethod, transactionId,
