@@ -15,7 +15,6 @@ const admin = require("firebase-admin");
 
 
 
-console.log(process.env.FB_SERVICE_KEY.substring(0, 50));
 const serviceAccount = JSON.parse(
   Buffer.from(process.env.FB_SERVICE_KEY, "base64").toString("utf8")
 );
