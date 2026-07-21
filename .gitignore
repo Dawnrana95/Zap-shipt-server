@@ -1,3 +1,5 @@
 node_modules
 .env
+.gitignore
 final-project-b153e-firebase-adminsdk-fbsvc-82684be840.json
+.vercel

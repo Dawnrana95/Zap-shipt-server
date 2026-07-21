@@ -7,13 +7,21 @@ const port = process.env.PORT || 5000;
 const app = express();
 
 // ✅ firebase-admin সঠিকভাবে import
-const { initializeApp, cert } = require('firebase-admin/app');
-const { getAuth } = require('firebase-admin/auth');
+// const { initializeApp, cert } = require('firebase-admin/app');
+// const { getAuth } = require('firebase-admin/auth');
+// const serviceAccount = require("./final-project-b153e-firebase-adminsdk-fbsvc-82684be840.json");
 
-const serviceAccount = require("./final-project-b153e-firebase-adminsdk-fbsvc-82684be840.json");
+const admin = require("firebase-admin");
 
-initializeApp({
-    credential: cert(serviceAccount)  // ✅
+
+
+console.log(process.env.FB_SERVICE_KEY.substring(0, 50));
+const serviceAccount = JSON.parse(
+  Buffer.from(process.env.FB_SERVICE_KEY, "base64").toString("utf8")
+);
+
+admin.initializeApp({
+   credential: admin.cert(serviceAccount),
 });
 
 // ✅ Stripe
