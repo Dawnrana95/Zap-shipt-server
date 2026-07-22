@@ -13,7 +13,7 @@ const admin = require("firebase-admin");
 const serviceAccount = JSON.parse(
   Buffer.from(process.env.FB_SERVICE_KEY, "base64").toString("utf8")
 );
-
+console.log(admin);
 admin.initializeApp({
    credential: admin.cert(serviceAccount),
 });
@@ -307,8 +307,8 @@ async function run() {
             }
         });
 
-        await client.db("admin").command({ ping: 1 });
-        console.log("Successfully connected to MongoDB!");
+        // await client.db("admin").command({ ping: 1 });
+        // console.log("Successfully connected to MongoDB!");
 
         app.listen(port, () => {
             console.log(`🚀 Server is running on port ${port}`);
