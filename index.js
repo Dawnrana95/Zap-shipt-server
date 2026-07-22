@@ -3,17 +3,12 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
-
 const app = express();
+const { getAuth } = require("firebase-admin/auth");
 
-// ✅ firebase-admin সঠিকভাবে import
-// const { initializeApp, cert } = require('firebase-admin/app');
-// const { getAuth } = require('firebase-admin/auth');
-// const serviceAccount = require("./final-project-b153e-firebase-adminsdk-fbsvc-82684be840.json");
+
 
 const admin = require("firebase-admin");
-
-
 
 const serviceAccount = JSON.parse(
   Buffer.from(process.env.FB_SERVICE_KEY, "base64").toString("utf8")
@@ -23,12 +18,14 @@ admin.initializeApp({
    credential: admin.cert(serviceAccount),
 });
 
+
 // ✅ Stripe
-const stripe = require("stripe")(process.env.STRUO_SECRET_KEE);
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 // middleware
 app.use(cors());
 app.use(express.json());
+
 
 // ✅ Middleware
 const verifyFBToken = async (req, res, next) => {
@@ -135,7 +132,7 @@ async function run() {
             res.send(result)
         })
         //✅ Rider Delet Apply
-        app.delete('/rider:id', verifyFBToken, async (req, res) => {
+        app.delete('/rider/:id', verifyFBToken, async (req, res) => {
             const id = req.params.id;
             const quary = { _id: new ObjectId(id) }
             const result = await RiderCullactoon.deleteOne(quary)
@@ -159,7 +156,7 @@ async function run() {
             res.send(result)
         })
         // ✅Rider set status
-        app.patch('/rider:id', verifyFBToken, variFyAdmin, async (req, res) => {
+        app.patch('/rider/:id', verifyFBToken, variFyAdmin, async (req, res) => {
             const status = req.body.status;
             const id = req.params.id;
             const quary = { _id: new ObjectId(id) }
@@ -316,7 +313,6 @@ async function run() {
         app.listen(port, () => {
             console.log(`🚀 Server is running on port ${port}`);
         });
-
     } catch (error) {
         console.error("❌ Error:", error.message)
     }
