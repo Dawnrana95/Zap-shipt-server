@@ -4,18 +4,18 @@ const cors = require('cors');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 const app = express();
-const { getAuth } = require("firebase-admin/auth");
+// const { getAuth } = require("firebase-admin/auth");
 
 
 
 const admin = require("firebase-admin");
 
 const serviceAccount = JSON.parse(
-  Buffer.from(process.env.FB_SERVICE_KEY, "base64").toString("utf8")
+    Buffer.from(process.env.FB_SERVICE_KEY, "base64").toString("utf8")
 );
 console.log(admin);
 admin.initializeApp({
-   credential: admin.cert(serviceAccount),
+    credential: admin.cert(serviceAccount),
 });
 
 
@@ -36,8 +36,8 @@ const verifyFBToken = async (req, res, next) => {
     }
     try {
         const idtoken = token.split(' ')[1];
-        const decoded = await getAuth().verifyIdToken(idtoken);  // ✅
-
+        // const decoded = await getAuth().verifyIdToken(idtoken);  // 
+        const decoded = await admin.auth().verifyIdToken(idtoken);
         req.decoded_email = decoded.email;
 
         next()
@@ -140,17 +140,17 @@ async function run() {
         })
         // ✅Rider find
         app.get('/rider', async (req, res) => {
-            const {status,senderRegion} = req.query;
+            const { status, senderRegion } = req.query;
 
             const query = {}
 
             if (status) {
                 query.status = status
             }
-            if(senderRegion){
+            if (senderRegion) {
                 query.senderRegion = senderRegion
             }
-            
+
 
             const result = await RiderCullactoon.find(query).toArray()
             res.send(result)
@@ -195,11 +195,11 @@ async function run() {
             res.send(result)
         })
         //✅ Updat parcel Data and rider data //
-        app.patch('/applications/:id',async(req, res)=>{
-            const {riderId, riderEmail, riderName, parcelId} = req.body
+        app.patch('/applications/:id', async (req, res) => {
+            const { riderId, riderEmail, riderName, parcelId } = req.body
             const id = req.params.id;
 
-            const quary = {_id: new ObjectId(id)}
+            const quary = { _id: new ObjectId(id) }
 
             const updateDocs = {
                 $set: {
@@ -210,30 +210,30 @@ async function run() {
 
                 }
             }
-            const result = await database.updateOne(quary,updateDocs)
+            const result = await database.updateOne(quary, updateDocs)
 
             //updat rider
-            const riderquery = {_id: new ObjectId(riderId)}
+            const riderquery = { _id: new ObjectId(riderId) }
             const riderUpdat = {
                 $set: {
                     workstatus: 'in-dalivare'
                 }
             }
-            const riderresult = await RiderCullactoon.updateOne(riderquery,riderUpdat)
+            const riderresult = await RiderCullactoon.updateOne(riderquery, riderUpdat)
             res.send(result)
         })
 
 
 
         // ✅ Send Parcel data in client side 
-        app.get('/applications',  async (req, res) => {
-            const query =  {};
-            const {email, deliveryStatas} = req.query;
+        app.get('/applications', async (req, res) => {
+            const query = {};
+            const { email, deliveryStatas } = req.query;
 
-            if(email){
-                query.email= email;
+            if (email) {
+                query.email = email;
             }
-            if(deliveryStatas){
+            if (deliveryStatas) {
                 query.deliveryStatas = deliveryStatas;
             }
 
